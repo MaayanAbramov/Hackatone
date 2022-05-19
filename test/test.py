@@ -28,17 +28,19 @@ gTTS(text="Please turn left my man", lang="en").save("adjustEyesLeft.mp3")
 p = multiprocessing.Process()
 
 def play_audio(audio_file):
-    global p
-    #global play_audio_last
-    #current_t = time.time()
-    #if current_t - play_audio_last > 2:
-    if not p.is_alive():
-        p = multiprocessing.Process(target=playsound(audio_file, block = False))
-        p.start()
-        #playsound(audio_file, block = False)
-        #play_audio_last = time.time()
+    #global p
+    global play_audio_last
+    current_t = time.time()
+    if current_t - play_audio_last > 2:
+    #if not p.is_alive():
+        #p = multiprocessing.Process(target=playsound(audio_file, block = False))
+        #p.start()
+        playsound(audio_file, block = False)
+        play_audio_last = time.time()
 
 def main():
+    frame_cout = 0
+    frame_spree_type = 0
     while True:
         ret, frame = cap.read()
         frame_fliped = frame
@@ -59,19 +61,60 @@ def main():
         faces = face_cascade.detectMultiScale(gray, scaleFactor, minNeighbors)
         right_profile_cascade = profile_cascade.detectMultiScale(gray, scaleFactor, minNeighbors)
         left_profile_cascade = profile_cascade.detectMultiScale(gray_fliped, scaleFactor, minNeighbors)
+        if len(faces) == 0:
+            if len(right_profile_cascade) != 0:
+                if(frame_cout < 30):
+                    if frame_spree_type == 1:
+                        frame_cout+=1
+                    else:
+                        frame_cout = 1
+                        frame_spree_type = 1
+                else:
+                    play_audio('adjustEyesRight.mp3')
+                    frame_cout = 1
+            elif len(left_profile_cascade) != 0:
+                if(frame_cout < 30):
+                    if frame_spree_type == 2:
+                        frame_cout+=1
+                    else:
+                        frame_cout = 1
+                        frame_spree_type = 2
+                else:
+                    play_audio('adjustEyesLeft.mp3')
+                    frame_cout = 1
+            else:
+                if(frame_cout < 30):
+                    if frame_spree_type == 3:
+                        frame_cout+=1
+                    else:
+                        frame_cout = 1
+                        frame_spree_type = 3
+                else:
+                    play_audio('lostFace.mp3')
+                    frame_cout = 1
+            
         for(x, y, w, h) in right_profile_cascade:
-            play_audio('adjustEyesRight.mp3')
+            #play_audio('adjustEyesRight.mp3')
             cv2.rectangle(frame, (x, y), (x + w, y + h), blue_green, lineThickness)
         for(x, y, w, h) in left_profile_cascade:
-            play_audio('adjustEyesLeft.mp3')
+            #play_audio('adjustEyesLeft.mp3')
             cv2.rectangle(frame, (x, y), (x + w, y + h), blue_red, lineThickness)
+        newx=0
+        newy=0
+        neww=0
+        newh=0
         for (x, y, w, h) in faces:
             #t0 = time.clock()
-            if len(faces) == 0:# and not p.is_alive():
+            #if len(faces) == 0:# and not p.is_alive():
                 #p = multiprocessing.Process(target=playsound, args='lostFace.mp3').start()
-                play_audio('lostFace.mp3')
+                #play_audio('lostFace.mp3')
                 #time.sleep(0.2)
-            cv2.rectangle(frame, (x, y), (x + w, y + h), blue, lineThickness)
+            if (w-x)*(h-y)>(neww-newh)*(newh-newy):
+                newx=x
+                newy=y
+                neww=w
+                newh=h
+            #cv2.rectangle(frame, (x, y), (x + w, y + h), blue, lineThickness)
             faceCenterXAxis=x+w//2
             roi_gray = gray[y:y+w, x:x+w]
             roi_color = frame[y:y+h, x:x+w]
@@ -89,6 +132,7 @@ def main():
                     elif eyeCenterXAxis < faceCenterXAxis:
                         play_audio('adjustEyesLeft.mp3')
                 """
+        cv2.rectangle(frame, (newx, newy), (newx + neww, newy + newh), blue, lineThickness)
         cv2.imshow('frame', frame)
         if cv2.waitKey(1) == ord('q'):
             break

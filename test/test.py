@@ -92,28 +92,45 @@ def main():
                 else:
                     play_audio('lostFace.mp3')
                     frame_cout = 1
-            
+        profile_side_faceMaxX=0
+        profile_side_faceMaxY=0
+        profile_side_faceMaxW=0
+        profile_side_faceMaxH=0
         for(x, y, w, h) in right_profile_cascade:
+            if (w*h)>(profile_side_faceMaxW)*(profile_side_faceMaxH):
+                profile_side_faceMaxX=x
+                profile_side_faceMaxY=y
+                profile_side_faceMaxW=w
+                profile_side_faceMaxH=h
             #play_audio('adjustEyesRight.mp3')
-            cv2.rectangle(frame, (x, y), (x + w, y + h), blue_green, lineThickness)
+            #cv2.rectangle(frame, (x, y), (x + w, y + h), blue_green, lineThickness)
+        profile_side_leftMaxX=0
+        profile_side_leftMaxY=0
+        profile_side_leftMaxW=0
+        profile_side_leftMaxH=0
         for(x, y, w, h) in left_profile_cascade:
+            if (w*h)>(profile_side_leftMaxW*profile_side_leftMaxH):
+                profile_side_leftMaxX=x
+                profile_side_leftMaxY=y
+                profile_side_leftMaxW=w
+                profile_side_leftMaxH=h
             #play_audio('adjustEyesLeft.mp3')
-            cv2.rectangle(frame, (x, y), (x + w, y + h), blue_red, lineThickness)
-        newx=0
-        newy=0
-        neww=0
-        newh=0
+            #cv2.rectangle(frame, (width-x, y), (width-(x + w), y + h), blue_red, lineThickness)
+        faceMaxX=0
+        faceMaxY=0
+        faceMaxW=0
+        faceMaxH=0
         for (x, y, w, h) in faces:
             #t0 = time.clock()
             #if len(faces) == 0:# and not p.is_alive():
                 #p = multiprocessing.Process(target=playsound, args='lostFace.mp3').start()
                 #play_audio('lostFace.mp3')
                 #time.sleep(0.2)
-            if (w-x)*(h-y)>(neww-newh)*(newh-newy):
-                newx=x
-                newy=y
-                neww=w
-                newh=h
+            if (w*h)>(faceMaxW*faceMaxH):
+                faceMaxX=x
+                faceMaxY=y
+                faceMaxW=w
+                faceMaxH=h
             #cv2.rectangle(frame, (x, y), (x + w, y + h), blue, lineThickness)
             faceCenterXAxis=x+w//2
             roi_gray = gray[y:y+w, x:x+w]
@@ -132,7 +149,27 @@ def main():
                     elif eyeCenterXAxis < faceCenterXAxis:
                         play_audio('adjustEyesLeft.mp3')
                 """
-        cv2.rectangle(frame, (newx, newy), (newx + neww, newy + newh), blue, lineThickness)
+        #cv2.rectangle(frame, (faceMaxX, faceMaxY), (faceMaxX + faceMaxW, faceMaxY + faceMaxH), blue, lineThickness)
+        #cv2.rectangle(frame, (profile_side_faceMaxX, profile_side_faceMaxY), (profile_side_faceMaxX + profile_side_faceMaxW, profile_side_faceMaxY + profile_side_faceMaxH), blue_green, lineThickness)
+        if (profile_side_faceMaxW*profile_side_faceMaxH)>(faceMaxW*faceMaxH) and (profile_side_faceMaxW*profile_side_faceMaxH) > (profile_side_leftMaxW*profile_side_leftMaxH):
+            MaxX=profile_side_faceMaxX
+            MaxY=profile_side_faceMaxY
+            MaxW=profile_side_faceMaxW
+            MaxH=profile_side_faceMaxH
+            color=blue_green
+        elif (profile_side_leftMaxW*profile_side_leftMaxH > (profile_side_faceMaxW*profile_side_faceMaxH) and (profile_side_leftMaxW*profile_side_leftMaxH) > (faceMaxW*faceMaxH)):
+            MaxX=width-profile_side_leftMaxX-profile_side_leftMaxW
+            MaxY=profile_side_leftMaxY
+            MaxW=profile_side_leftMaxW
+            MaxH=profile_side_leftMaxH
+            color=blue_red
+        else:
+            MaxX=faceMaxX
+            MaxY=faceMaxY
+            MaxW=faceMaxW
+            MaxH=faceMaxH
+            color=blue
+        cv2.rectangle(frame, (MaxX, MaxY), (MaxX + MaxW, MaxY + MaxH), color, lineThickness)
         cv2.imshow('frame', frame)
         if cv2.waitKey(1) == ord('q'):
             break

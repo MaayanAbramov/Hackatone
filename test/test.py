@@ -9,7 +9,7 @@ from gtts import gTTS
 from playsound import playsound
 
 play_audio_last = 0.0
-epsilon = 1.0
+epsilon = 2.0
 
 X_INDEX=0
 Y_INDEX=1
@@ -27,7 +27,7 @@ def play_audio(audio_file):
     #global p
     global play_audio_last
     current_t = time.time()
-    if current_t - play_audio_last > 2:
+    if current_t - play_audio_last > epsilon:
     #if not p.is_alive():
         #p = multiprocessing.Process(target=playsound(audio_file, block = False))
         #p.start()
@@ -36,6 +36,7 @@ def play_audio(audio_file):
 
 def main():
     cap = cv2.VideoCapture(0)
+    
     profile_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_profileface.xml')
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
@@ -46,10 +47,11 @@ def main():
     gTTS(text="Please look right", lang="en").save("adjustEyesRight.mp3")
     gTTS(text="Please look left", lang="en").save("adjustEyesLeft.mp3")
 
-    p = multiprocessing.Process()
+    #p = multiprocessing.Process()
 
     frame_cout = 0
     frame_spree_type = 0
+
     while True:
         ret, frame = cap.read()
         frame_fliped = frame
@@ -59,17 +61,21 @@ def main():
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray_fliped = cv2.cvtColor(frame_fliped, cv2.COLOR_BGR2GRAY)
+
         scaleFactor=1.2
         minNeighbors=5
         lineThickness=3
+
         green=(0, 255, 0)
         blue=(255, 0, 0)
         blue_green=(255,255,0)
         blue_red=(255,0,255)
         red=(0, 0, 255)
+
         faces = face_cascade.detectMultiScale(gray, scaleFactor, minNeighbors)
         right_profile_cascade = profile_cascade.detectMultiScale(gray, scaleFactor, minNeighbors)
         left_profile_cascade = profile_cascade.detectMultiScale(gray_fliped, scaleFactor, minNeighbors)
+
         if len(faces) == 0:
             if len(right_profile_cascade) != 0:
                 if(frame_cout < 30):
@@ -101,18 +107,21 @@ def main():
                 else:
                     play_audio('lostFace.mp3')
                     frame_cout = 1
+
         profile_side_rightMax=(0,0,0,0)
         for(x, y, w, h) in right_profile_cascade:
             if (w*h)>(profile_side_rightMax[W_INDEX])*(profile_side_rightMax[H_INDEX]):
                 profile_side_rightMax=(x, y, w, h)
             #play_audio('adjustEyesRight.mp3')
             #cv2.rectangle(frame, (x, y), (x + w, y + h), blue_green, lineThickness)
+
         profile_side_leftMax=(0,0,0,0)
         for(x, y, w, h) in left_profile_cascade:
             if (w*h)>(profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX]):
                 profile_side_leftMax=(x, y, w, h)
             #play_audio('adjustEyesLeft.mp3')
             #cv2.rectangle(frame, (width-x, y), (width-(x + w), y + h), blue_red, lineThickness)
+
         faceMax=(0,0,0,0)
         for (x, y, w, h) in faces:
             #t0 = time.clock()
@@ -142,6 +151,7 @@ def main():
                 """
         #cv2.rectangle(frame, (faceMaxX, faceMaxY), (faceMaxX + faceMaxW, faceMaxY + faceMaxH), blue, lineThickness)
         #cv2.rectangle(frame, (profile_side_faceMaxX, profile_side_faceMaxY), (profile_side_faceMaxX + profile_side_faceMaxW, profile_side_faceMaxY + profile_side_faceMaxH), blue_green, lineThickness)
+        
         if (profile_side_rightMax[W_INDEX]*profile_side_rightMax[H_INDEX])>(faceMax[W_INDEX]*faceMax[H_INDEX]) and (profile_side_rightMax[W_INDEX]*profile_side_rightMax[H_INDEX]) > (profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX]):
             Max=profile_side_rightMax
             color=blue_green
@@ -154,8 +164,11 @@ def main():
         else:
             Max=faceMax
             color=blue
+
         cv2.rectangle(frame, (Max[X_INDEX], Max[Y_INDEX]), (Max[X_INDEX] + Max[W_INDEX], Max[Y_INDEX] + Max[H_INDEX]), color, lineThickness)
+        
         cv2.imshow('frame', frame)
+        
         if cv2.waitKey(1) == ord('q'):
             break
 

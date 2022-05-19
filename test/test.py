@@ -8,8 +8,8 @@ import numpy
 from gtts import gTTS
 from playsound import playsound
 
-play_audio_last = 0.0
-epsilon = 2.0
+LAST_AUDIO_PLAYED = 0.0
+AUDIO_PLAY_PAUSE = 2.0
 
 GREEN=(0, 255, 0)
 BLUE=(255, 0, 0)
@@ -51,10 +51,6 @@ def findMax(width, faces, right_profile_cascade, left_profile_cascade):
             color=BLUE
         return (Max, color)
 
-
-
-
-
 def create_audio():
     gTTS(text="Please adjust your face", lang="en").save("lostFace.mp3")
     gTTS(text="Please look right", lang="en").save("adjustEyesRight.mp3")
@@ -67,14 +63,14 @@ def delete_audio():
 
 def play_audio(audio_file):
     #global p
-    global play_audio_last
+    global LAST_AUDIO_PLAYED
     current_t = time.time()
-    if current_t - play_audio_last > epsilon:
+    if current_t - LAST_AUDIO_PLAYED > AUDIO_PLAY_PAUSE:
     #if not p.is_alive():
         #p = multiprocessing.Process(target=playsound(audio_file, block = False))
         #p.start()
         playsound(audio_file, block = False)
-        play_audio_last = time.time()
+        LAST_AUDIO_PLAYED = time.time()
 
 def main():
     cap = cv2.VideoCapture(0)

@@ -5,7 +5,7 @@ import time
 
 import cv2
 import function
-import m_queue as q
+#import m_queue as q
 import numpy
 from gtts import gTTS
 from playsound import playsound
@@ -46,23 +46,24 @@ def findMax(frame, width, faces, right_profile_cascade, left_profile_cascade):
             if (w*h)>(faceMax[W_INDEX]*faceMax[H_INDEX]):
                 faceMax=(x, y, w, h)
         Max=(0, 0, 0, 0)
-        if (profile_side_rightMax[W_INDEX]*profile_side_rightMax[H_INDEX])>=(faceMax[W_INDEX]*faceMax[H_INDEX]) and (profile_side_rightMax[W_INDEX]*profile_side_rightMax[H_INDEX]) >= (profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX]):
+        if (profile_side_rightMax[W_INDEX]*profile_side_rightMax[H_INDEX])>(faceMax[W_INDEX]*faceMax[H_INDEX]) and (profile_side_rightMax[W_INDEX]*profile_side_rightMax[H_INDEX]) > (profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX]):
             Max=profile_side_rightMax
             color=BLUE_GREEN
-            q.add_to_queue(frame, "right")
-        elif (profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX] >= (profile_side_rightMax[W_INDEX]*profile_side_rightMax[H_INDEX]) and (profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX]) >= (faceMax[W_INDEX]*faceMax[H_INDEX])):
+            function.add_to_queue(frame, "right")
+        elif (profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX] > (profile_side_rightMax[W_INDEX]*profile_side_rightMax[H_INDEX]) and (profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX]) >= (faceMax[W_INDEX]*faceMax[H_INDEX])):
             Max=profile_side_leftMax
             tempMax=list(Max)
             tempMax[X_INDEX]=width-profile_side_leftMax[X_INDEX]-profile_side_leftMax[W_INDEX]
             Max=tuple(tempMax)
             color=BLUE_RED
-            q.add_to_queue(frame, "left")
-        elif (faceMax[W_INDEX]*faceMax[H_INDEX] >= (profile_side_rightMax[W_INDEX]*profile_side_rightMax[H_INDEX]) and (faceMax[W_INDEX]*faceMax[H_INDEX]) >= (profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX])):
+            function.add_to_queue(frame, "left")
+        elif (faceMax[W_INDEX]*faceMax[H_INDEX] > (profile_side_rightMax[W_INDEX]*profile_side_rightMax[H_INDEX]) and (faceMax[W_INDEX]*faceMax[H_INDEX]) > (profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX])):
             Max=faceMax
             color=BLUE
-            q.add_to_queue(frame, "front")
+            function.add_to_queue(frame, "front")
         else:
-            q.add_to_queue(frame, "none")
+            function.add_to_queue(frame, "none")
+            color = (0,0,0)
         return (Max, color)
 
 def create_audio():
@@ -213,14 +214,14 @@ def main():
         """
         (Max, color) = findMax(frame, width, faces, right_profile_cascade, left_profile_cascade)
         cv2.rectangle(frame, (Max[X_INDEX], Max[Y_INDEX]), (Max[X_INDEX] + Max[W_INDEX], Max[Y_INDEX] + Max[H_INDEX]), color, lineThickness)
-        match q.queue_max(34) :
+        match function.queue_max(34) :
             case "right" : 
                 play_audio('adjustEyesRight.mp3')
             case "left" :
                 play_audio('adjustEyesLeft.mp3')
             case "none" :
-                play_audio('lostFaces.mp3') 
-            
+                play_audio('lostFace.mp3') 
+        
 
         cv2.imshow('frame', frame)
         

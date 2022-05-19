@@ -1,7 +1,7 @@
 import math
+import multiprocessing
 import os
 import time
-import multiprocessing
 
 import cv2
 import numpy as np
@@ -10,19 +10,6 @@ from playsound import playsound
 
 play_audio_last = 0.0
 epsilon = 1.0
-
-cap = cv2.VideoCapture(0)
-profile_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_profileface.xml')
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
-
-"""
-gTTS(text="Welcome my man", lang="en").save("Welcome.mp3")
-gTTS(text="Please adjust your face my man", lang="en").save("lostFace.mp3")
-gTTS(text="Please turn right my man", lang="en").save("adjustEyesRight.mp3")
-gTTS(text="Please turn left my man", lang="en").save("adjustEyesLeft.mp3")
-"""
-p = multiprocessing.Process()
 
 def play_audio(audio_file):
     #global p
@@ -36,6 +23,24 @@ def play_audio(audio_file):
         play_audio_last = time.time()
 
 def main():
+    cap = cv2.VideoCapture(0)
+    profile_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_profileface.xml')
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+
+    if os.path.exists("lostFace.mp3"):
+        os.remove("lostFace.mp3")
+    if os.path.exists("adjustEyesRight.mp3"):
+        os.remove("adjustEyesRight.mp3")
+    if os.path.exists("adjustEyesLeft.mp3"):
+        os.remove("adjustEyesLeft.mp3")
+
+    gTTS(text="Please adjust your face", lang="en").save("lostFace.mp3")
+    gTTS(text="Please look right", lang="en").save("adjustEyesRight.mp3")
+    gTTS(text="Please look left", lang="en").save("adjustEyesLeft.mp3")
+
+    p = multiprocessing.Process()
+
     frame_cout = 0
     frame_spree_type = 0
     while True:
@@ -174,16 +179,12 @@ def main():
     cap.release()
     cv2.destroyAllWindows()
 
-    """
-    if os.path.exists("Welcome.mp3"):
-        os.remove("Welcome.mp3")
     if os.path.exists("lostFace.mp3"):
         os.remove("lostFace.mp3")
     if os.path.exists("adjustEyesRight.mp3"):
         os.remove("adjustEyesRight.mp3")
     if os.path.exists("adjustEyesLeft.mp3"):
         os.remove("adjustEyesLeft.mp3")
-    """
 
 if __name__ == "__main__":
     main()

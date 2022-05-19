@@ -4,12 +4,24 @@ import os
 import time
 
 import cv2
-import numpy as np
+import numpy
 from gtts import gTTS
 from playsound import playsound
 
 play_audio_last = 0.0
 epsilon = 1.0
+
+X_INDEX=0
+Y_INDEX=1
+W_INDEX=2
+H_INDEX=3
+
+audio_names=("lostFace.mp3", "adjustEyesRight.mp3", "adjustEyesLeft.mp3")
+
+def delete_audio():
+    for(audio) in audio_names:
+        if os.path.exists(audio):
+            os.remove(audio)
 
 def play_audio(audio_file):
     #global p
@@ -28,12 +40,7 @@ def main():
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
 
-    if os.path.exists("lostFace.mp3"):
-        os.remove("lostFace.mp3")
-    if os.path.exists("adjustEyesRight.mp3"):
-        os.remove("adjustEyesRight.mp3")
-    if os.path.exists("adjustEyesLeft.mp3"):
-        os.remove("adjustEyesLeft.mp3")
+    delete_audio()
 
     gTTS(text="Please adjust your face", lang="en").save("lostFace.mp3")
     gTTS(text="Please look right", lang="en").save("adjustEyesRight.mp3")
@@ -94,45 +101,27 @@ def main():
                 else:
                     play_audio('lostFace.mp3')
                     frame_cout = 1
-        profile_side_faceMaxX=0
-        profile_side_faceMaxY=0
-        profile_side_faceMaxW=0
-        profile_side_faceMaxH=0
+        profile_side_rightMax=(0,0,0,0)
         for(x, y, w, h) in right_profile_cascade:
-            if (w*h)>(profile_side_faceMaxW)*(profile_side_faceMaxH):
-                profile_side_faceMaxX=x
-                profile_side_faceMaxY=y
-                profile_side_faceMaxW=w
-                profile_side_faceMaxH=h
+            if (w*h)>(profile_side_rightMax[W_INDEX])*(profile_side_rightMax[H_INDEX]):
+                profile_side_rightMax=(x, y, w, h)
             #play_audio('adjustEyesRight.mp3')
             #cv2.rectangle(frame, (x, y), (x + w, y + h), blue_green, lineThickness)
-        profile_side_leftMaxX=0
-        profile_side_leftMaxY=0
-        profile_side_leftMaxW=0
-        profile_side_leftMaxH=0
+        profile_side_leftMax=(0,0,0,0)
         for(x, y, w, h) in left_profile_cascade:
-            if (w*h)>(profile_side_leftMaxW*profile_side_leftMaxH):
-                profile_side_leftMaxX=x
-                profile_side_leftMaxY=y
-                profile_side_leftMaxW=w
-                profile_side_leftMaxH=h
+            if (w*h)>(profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX]):
+                profile_side_leftMax=(x, y, w, h)
             #play_audio('adjustEyesLeft.mp3')
             #cv2.rectangle(frame, (width-x, y), (width-(x + w), y + h), blue_red, lineThickness)
-        faceMaxX=0
-        faceMaxY=0
-        faceMaxW=0
-        faceMaxH=0
+        faceMax=(0,0,0,0)
         for (x, y, w, h) in faces:
             #t0 = time.clock()
             #if len(faces) == 0:# and not p.is_alive():
                 #p = multiprocessing.Process(target=playsound, args='lostFace.mp3').start()
                 #play_audio('lostFace.mp3')
                 #time.sleep(0.2)
-            if (w*h)>(faceMaxW*faceMaxH):
-                faceMaxX=x
-                faceMaxY=y
-                faceMaxW=w
-                faceMaxH=h
+            if (w*h)>(faceMax[W_INDEX]*faceMax[H_INDEX]):
+                faceMax=(x, y, w, h)
             #cv2.rectangle(frame, (x, y), (x + w, y + h), blue, lineThickness)
             faceCenterXAxis=x+w//2
             roi_gray = gray[y:y+w, x:x+w]
@@ -153,25 +142,19 @@ def main():
                 """
         #cv2.rectangle(frame, (faceMaxX, faceMaxY), (faceMaxX + faceMaxW, faceMaxY + faceMaxH), blue, lineThickness)
         #cv2.rectangle(frame, (profile_side_faceMaxX, profile_side_faceMaxY), (profile_side_faceMaxX + profile_side_faceMaxW, profile_side_faceMaxY + profile_side_faceMaxH), blue_green, lineThickness)
-        if (profile_side_faceMaxW*profile_side_faceMaxH)>(faceMaxW*faceMaxH) and (profile_side_faceMaxW*profile_side_faceMaxH) > (profile_side_leftMaxW*profile_side_leftMaxH):
-            MaxX=profile_side_faceMaxX
-            MaxY=profile_side_faceMaxY
-            MaxW=profile_side_faceMaxW
-            MaxH=profile_side_faceMaxH
+        if (profile_side_rightMax[W_INDEX]*profile_side_rightMax[H_INDEX])>(faceMax[W_INDEX]*faceMax[H_INDEX]) and (profile_side_rightMax[W_INDEX]*profile_side_rightMax[H_INDEX]) > (profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX]):
+            Max=profile_side_rightMax
             color=blue_green
-        elif (profile_side_leftMaxW*profile_side_leftMaxH > (profile_side_faceMaxW*profile_side_faceMaxH) and (profile_side_leftMaxW*profile_side_leftMaxH) > (faceMaxW*faceMaxH)):
-            MaxX=width-profile_side_leftMaxX-profile_side_leftMaxW
-            MaxY=profile_side_leftMaxY
-            MaxW=profile_side_leftMaxW
-            MaxH=profile_side_leftMaxH
+        elif (profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX] > (profile_side_rightMax[W_INDEX]*profile_side_rightMax[H_INDEX]) and (profile_side_leftMax[W_INDEX]*profile_side_leftMax[H_INDEX]) > (faceMax[W_INDEX]*faceMax[H_INDEX])):
+            Max=profile_side_leftMax
+            tempMax=list(Max)
+            tempMax[X_INDEX]=width-profile_side_leftMax[X_INDEX]-profile_side_leftMax[W_INDEX]
+            Max=tuple(tempMax)
             color=blue_red
         else:
-            MaxX=faceMaxX
-            MaxY=faceMaxY
-            MaxW=faceMaxW
-            MaxH=faceMaxH
+            Max=faceMax
             color=blue
-        cv2.rectangle(frame, (MaxX, MaxY), (MaxX + MaxW, MaxY + MaxH), color, lineThickness)
+        cv2.rectangle(frame, (Max[X_INDEX], Max[Y_INDEX]), (Max[X_INDEX] + Max[W_INDEX], Max[Y_INDEX] + Max[H_INDEX]), color, lineThickness)
         cv2.imshow('frame', frame)
         if cv2.waitKey(1) == ord('q'):
             break
@@ -179,12 +162,7 @@ def main():
     cap.release()
     cv2.destroyAllWindows()
 
-    if os.path.exists("lostFace.mp3"):
-        os.remove("lostFace.mp3")
-    if os.path.exists("adjustEyesRight.mp3"):
-        os.remove("adjustEyesRight.mp3")
-    if os.path.exists("adjustEyesLeft.mp3"):
-        os.remove("adjustEyesLeft.mp3")
+    delete_audio()
 
 if __name__ == "__main__":
     main()

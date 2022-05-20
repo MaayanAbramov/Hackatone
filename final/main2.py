@@ -2,10 +2,9 @@ import os
 import time
 
 import cv2
+import function
 from gtts import gTTS
 from playsound import playsound
-
-import function
 
 LAST_AUDIO_PLAYED = 0.0
 AUDIO_PLAY_PAUSE = 5.0
@@ -84,9 +83,12 @@ def main():
     cap = cv2.VideoCapture(0)
     profile_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_profileface.xml')
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
     delete_audio()
     create_audio()
 
+    frame_cout = 0
+    frame_spree_type = 0
     scaleFactor=1.2
     minNeighbors=5
     lineThickness=3
@@ -104,8 +106,8 @@ def main():
         faces = face_cascade.detectMultiScale(gray, scaleFactor, minNeighbors)
         right_profile_cascade = profile_cascade.detectMultiScale(gray, scaleFactor, minNeighbors)
         left_profile_cascade = profile_cascade.detectMultiScale(gray_fliped, scaleFactor, minNeighbors)
-
         (Max, color) = findMax(frame, width, faces, right_profile_cascade, left_profile_cascade)
+        cv2.rectangle(frame, (Max[X_INDEX], Max[Y_INDEX]), (Max[X_INDEX] + Max[W_INDEX], Max[Y_INDEX] + Max[H_INDEX]), color, lineThickness)
         match function.queue_max(34) :
             case "right" : 
                 play_audio('adjustEyesRight.mp3')
